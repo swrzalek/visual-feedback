@@ -78,6 +78,15 @@
     window.__visualFeedbackPickerActive = false;
   }
 
+  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message?.type === 'PING_PICKER') {
+      sendResponse({ ok: true, active: true });
+      return false;
+    }
+
+    return false;
+  });
+
   function isIgnoredElement(element) {
     return (
       !element ||
@@ -411,7 +420,7 @@
       cleanup();
       return;
     }
-    async function persistFeedback(copiedToClipboard) {
+    async function persistFeedback(clipboardText) {
       return new Promise((resolve) => {
         chrome.runtime.sendMessage(
           {
@@ -420,34 +429,30 @@
               selector,
               note,
               pageUrl: window.location.href,
-              copiedToClipboard
+              clipboardText,
+              aiMode: Boolean(window.__visualFeedbackAiMode)
             }
           },
-          () => {
-            resolve();
+          (response) => {
+            resolve(response?.feedback || null);
           }
         );
       });
     }
 
     async function finishSelection() {
-      let copiedToClipboard = false;
       const aiMode = await loadAiMode();
+      window.__visualFeedbackAiMode = aiMode;
       const payload = aiMode ? getAiPayload(selector, note) : getDefaultPayload(selector, note);
 
-      try {
-        await navigator.clipboard.writeText(payload);
-        copiedToClipboard = true;
-      } catch {
-        copiedToClipboard = false;
-      }
-
-      await persistFeedback(copiedToClipboard);
+      const feedback = await persistFeedback(payload);
+      const copiedToClipboard = Boolean(feedback?.copiedToClipboard);
 
       if (copiedToClipboard) {
         window.alert('Feedback copied to clipboard.');
       } else {
-        window.alert('Feedback saved, but automatic clipboard copy failed. Open the extension popup and use Copy.');
+        const copyError = feedback?.copyError ? `\n\nReason: ${feedback.copyError}` : '';
+        window.alert(`Feedback saved, but automatic clipboard copy failed. Open the extension popup and use Copy.${copyError}`);
       }
 
       cleanup();

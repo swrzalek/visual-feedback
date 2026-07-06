@@ -3,6 +3,7 @@ const statusElement = document.getElementById('status-message');
 const pickButton = document.getElementById('pick-element');
 const copyButton = document.getElementById('copy-result');
 const aiModeCheckbox = document.getElementById('ai-mode');
+const shortcutStatusElement = document.getElementById('shortcut-status');
 const AI_INSTRUCTION = 'Use the selector only to identify the target element for this request. Do not treat it as the required implementation selector; apply the requested change using the best fit for the codebase.';
 
 function setStatus(message, isError = false) {
@@ -13,6 +14,10 @@ function setStatus(message, isError = false) {
 function formatFeedback(feedback) {
   if (!feedback) {
     return 'No feedback captured yet.';
+  }
+
+  if (typeof feedback.clipboardText === 'string' && feedback.clipboardText) {
+    return feedback.clipboardText;
   }
 
   return JSON.stringify(
@@ -28,6 +33,10 @@ function formatFeedback(feedback) {
 function formatAiFeedback(feedback) {
   if (!feedback) {
     return 'No feedback captured yet.';
+  }
+
+  if (typeof feedback.clipboardText === 'string' && feedback.clipboardText) {
+    return feedback.clipboardText;
   }
 
   return [
@@ -71,6 +80,25 @@ function saveSettings() {
   );
 }
 
+function loadCommandStatus() {
+  chrome.runtime.sendMessage({ type: 'GET_COMMAND_STATUS' }, (response) => {
+    if (chrome.runtime.lastError || !response || !response.ok) {
+      shortcutStatusElement.textContent = '';
+      return;
+    }
+
+    const status = response.status;
+    if (!status) {
+      shortcutStatusElement.textContent = 'No shortcut run recorded yet.';
+      return;
+    }
+
+    shortcutStatusElement.textContent = status.ok
+      ? `Last shortcut run succeeded on ${status.at}.`
+      : `Last shortcut run failed: ${status.message}`;
+  });
+}
+
 function loadSettings() {
   chrome.runtime.sendMessage({ type: 'GET_SETTINGS' }, (response) => {
     if (chrome.runtime.lastError) {
@@ -85,6 +113,7 @@ function loadSettings() {
 
     aiModeCheckbox.checked = Boolean(response.settings?.aiMode);
     loadLatestFeedback();
+    loadCommandStatus();
   });
 }
 
@@ -103,6 +132,8 @@ function loadLatestFeedback() {
     renderFeedback(response.feedback);
     if (response.feedback?.copiedToClipboard) {
       setStatus('Latest feedback was copied automatically.');
+    } else if (response.feedback?.copyError) {
+      setStatus(`Auto-copy failed: ${response.feedback.copyError}`, true);
     }
   });
 }

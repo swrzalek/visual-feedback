@@ -68,6 +68,33 @@ h1 {
   border-radius: 10px;
 }
 
+.shortcut-card {
+  margin-top: 16px;
+  padding: 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+
+.shortcut-header h2 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.shortcut-text,
+.shortcut-help {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: #475569;
+}
+
+.shortcut-help code {
+  padding: 1px 4px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  color: #0f172a;
+}
+
 .result-header {
   display: flex;
   align-items: center;
