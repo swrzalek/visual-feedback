@@ -7,7 +7,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.type === 'SAVE_FEEDBACK') {
-    const { selector, note, pageUrl } = message.payload || {};
+    const { selector, note, pageUrl, copiedToClipboard } = message.payload || {};
 
     if (typeof selector !== 'string' || !selector.trim()) {
       sendResponse({ ok: false, error: 'Selector is required.' });
@@ -23,6 +23,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       selector: selector.trim(),
       note: note.trim(),
       pageUrl: typeof pageUrl === 'string' ? pageUrl : '',
+      copiedToClipboard: Boolean(copiedToClipboard),
       capturedAt: new Date().toISOString()
     };
 

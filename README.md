@@ -9,6 +9,7 @@ A basic Chrome extension that lets you pick an element on a page, add a note, an
 - Popup button to start picker mode
 - Page hover highlight + click-to-select flow
 - Prompt for a note after selecting an element
+- Automatic clipboard copy after capture when the page allows it
 - Copy-ready output:
 
 ```json
@@ -43,10 +44,12 @@ A basic Chrome extension that lets you pick an element on a page, add a note, an
 3. Click **Pick element**
 4. Hover and click the target element
 5. Enter a note in the prompt
-6. Reopen the popup and click **Copy**
+6. The extension attempts to copy the result automatically
+7. If auto-copy is blocked, reopen the popup and click **Copy**
 
 ## Notes
 
 - Press `Esc` while picking to cancel.
 - The selector generator is intentionally simple and best-effort for v1.
 - The extension stores only the latest captured result in `chrome.storage.local`.
+- Clipboard auto-copy can fail on some pages/browser states, so the popup copy button remains as a fallback.

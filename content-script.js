@@ -174,20 +174,56 @@
       cleanup();
       return;
     }
-
-    chrome.runtime.sendMessage(
+    const payload = JSON.stringify(
       {
-        type: 'SAVE_FEEDBACK',
-        payload: {
-          selector,
-          note,
-          pageUrl: window.location.href
-        }
+        selector,
+        note
       },
-      () => {
-        cleanup();
-      }
+      null,
+      2
     );
+
+    async function persistFeedback(copiedToClipboard) {
+      return new Promise((resolve) => {
+        chrome.runtime.sendMessage(
+          {
+            type: 'SAVE_FEEDBACK',
+            payload: {
+              selector,
+              note,
+              pageUrl: window.location.href,
+              copiedToClipboard
+            }
+          },
+          () => {
+            resolve();
+          }
+        );
+      });
+    }
+
+    async function finishSelection() {
+      let copiedToClipboard = false;
+
+      try {
+        await navigator.clipboard.writeText(payload);
+        copiedToClipboard = true;
+      } catch {
+        copiedToClipboard = false;
+      }
+
+      await persistFeedback(copiedToClipboard);
+
+      if (copiedToClipboard) {
+        window.alert('Feedback copied to clipboard.');
+      } else {
+        window.alert('Feedback saved, but automatic clipboard copy failed. Open the extension popup and use Copy.');
+      }
+
+      cleanup();
+    }
+
+    finishSelection();
   }
 
   document.addEventListener('mousemove', handleMouseMove, true);

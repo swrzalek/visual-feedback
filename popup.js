@@ -36,6 +36,9 @@ function loadLatestFeedback() {
     }
 
     outputElement.textContent = formatFeedback(response.feedback);
+    if (response.feedback?.copiedToClipboard) {
+      setStatus('Latest feedback was copied automatically.');
+    }
   });
 }
 
