@@ -1,4 +1,5 @@
 const STORAGE_KEY = 'latestFeedback';
+const SETTINGS_KEY = 'settings';
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!message || typeof message !== 'object') {
@@ -47,6 +48,44 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }
 
       sendResponse({ ok: true, feedback: result[STORAGE_KEY] || null });
+    });
+
+    return true;
+  }
+
+  if (message.type === 'GET_SETTINGS') {
+    chrome.storage.local.get(SETTINGS_KEY, (result) => {
+      if (chrome.runtime.lastError) {
+        sendResponse({ ok: false, error: chrome.runtime.lastError.message });
+        return;
+      }
+
+      sendResponse({
+        ok: true,
+        settings: {
+          aiMode: Boolean(result[SETTINGS_KEY]?.aiMode)
+        }
+      });
+    });
+
+    return true;
+  }
+
+  if (message.type === 'SAVE_SETTINGS') {
+    const { aiMode } = message.payload || {};
+
+    if (typeof aiMode !== 'boolean') {
+      sendResponse({ ok: false, error: 'aiMode must be a boolean.' });
+      return false;
+    }
+
+    chrome.storage.local.set({ [SETTINGS_KEY]: { aiMode } }, () => {
+      if (chrome.runtime.lastError) {
+        sendResponse({ ok: false, error: chrome.runtime.lastError.message });
+        return;
+      }
+
+      sendResponse({ ok: true, settings: { aiMode } });
     });
 
     return true;

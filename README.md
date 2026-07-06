@@ -10,6 +10,7 @@ A basic Chrome extension that lets you pick an element on a page, add a note, an
 - Page hover highlight + live selector/style tooltip + click-to-select flow
 - Prompt for a note after selecting an element
 - Automatic clipboard copy after capture when the page allows it
+- Optional AI copy mode with reusable implementation guidance
 - Copy-ready output:
 
 ```json
@@ -41,12 +42,13 @@ A basic Chrome extension that lets you pick an element on a page, add a note, an
 
 1. Open any regular `http` or `https` page
 2. Open the extension popup
-3. Click **Pick element**
-4. Hover elements to preview the selector and computed styles in the popout
-5. Click the target element
-6. Enter a note in the prompt
-7. The extension attempts to copy the result automatically
-8. If auto-copy is blocked, reopen the popup and click **Copy**
+3. Enable **AI copy mode** if you want agent-ready output
+4. Click **Pick element**
+5. Hover elements to preview the selector and computed styles in the popout
+6. Click the target element
+7. Enter a note in the prompt
+8. The extension attempts to copy the result automatically
+9. If auto-copy is blocked, reopen the popup and click **Copy**
 
 ## Notes
 
@@ -55,3 +57,4 @@ A basic Chrome extension that lets you pick an element on a page, add a note, an
 - The style preview shows a curated subset of computed CSS properties for readability.
 - The extension stores only the latest captured result in `chrome.storage.local`.
 - Clipboard auto-copy can fail on some pages/browser states, so the popup copy button remains as a fallback.
+- AI copy mode prepends a reusable instruction so the result can be pasted directly into an AI coding agent.

@@ -2,6 +2,8 @@ const outputElement = document.getElementById('result-output');
 const statusElement = document.getElementById('status-message');
 const pickButton = document.getElementById('pick-element');
 const copyButton = document.getElementById('copy-result');
+const aiModeCheckbox = document.getElementById('ai-mode');
+const AI_INSTRUCTION = 'Use the selector only to identify the target element for this request. Do not treat it as the required implementation selector; apply the requested change using the best fit for the codebase.';
 
 function setStatus(message, isError = false) {
   statusElement.textContent = message;
@@ -23,6 +25,69 @@ function formatFeedback(feedback) {
   );
 }
 
+function formatAiFeedback(feedback) {
+  if (!feedback) {
+    return 'No feedback captured yet.';
+  }
+
+  return [
+    'Instruction:',
+    AI_INSTRUCTION,
+    '',
+    'Target selector:',
+    feedback.selector,
+    '',
+    'Note:',
+    feedback.note
+  ].join('\n');
+}
+
+function getFormattedOutput(feedback) {
+  return aiModeCheckbox.checked ? formatAiFeedback(feedback) : formatFeedback(feedback);
+}
+
+function renderFeedback(feedback) {
+  outputElement.textContent = getFormattedOutput(feedback);
+}
+
+function saveSettings() {
+  chrome.runtime.sendMessage(
+    {
+      type: 'SAVE_SETTINGS',
+      payload: {
+        aiMode: aiModeCheckbox.checked
+      }
+    },
+    (response) => {
+      if (chrome.runtime.lastError) {
+        setStatus(chrome.runtime.lastError.message, true);
+        return;
+      }
+
+      if (!response || !response.ok) {
+        setStatus(response?.error || 'Could not save settings.', true);
+      }
+    }
+  );
+}
+
+function loadSettings() {
+  chrome.runtime.sendMessage({ type: 'GET_SETTINGS' }, (response) => {
+    if (chrome.runtime.lastError) {
+      setStatus(chrome.runtime.lastError.message, true);
+      return;
+    }
+
+    if (!response || !response.ok) {
+      setStatus(response?.error || 'Could not load settings.', true);
+      return;
+    }
+
+    aiModeCheckbox.checked = Boolean(response.settings?.aiMode);
+    loadLatestFeedback();
+  });
+}
+
 function loadLatestFeedback() {
   chrome.runtime.sendMessage({ type: 'GET_LATEST_FEEDBACK' }, (response) => {
     if (chrome.runtime.lastError) {
@@ -35,7 +100,7 @@ function loadLatestFeedback() {
       return;
     }
 
-    outputElement.textContent = formatFeedback(response.feedback);
+    renderFeedback(response.feedback);
     if (response.feedback?.copiedToClipboard) {
       setStatus('Latest feedback was copied automatically.');
     }
@@ -86,6 +151,11 @@ async function copyResult() {
   }
 }
 
+aiModeCheckbox.addEventListener('change', () => {
+  saveSettings();
+  loadLatestFeedback();
+});
+
 pickButton.addEventListener('click', () => {
   startPicker();
 });
@@ -94,4 +164,4 @@ copyButton.addEventListener('click', () => {
   copyResult();
 });
 
-loadLatestFeedback();
+loadSettings();

@@ -50,6 +50,7 @@
 
   let currentTarget = null;
   let currentSelector = '';
+  const AI_INSTRUCTION = 'Use the selector only to identify the target element for this request. Do not treat it as the required implementation selector; apply the requested change using the best fit for the codebase.';
   const STYLE_PROPERTIES = [
     'display',
     'position',
@@ -248,6 +249,43 @@
     positionTooltip(element);
   }
 
+  function getAiPayload(selector, note) {
+    return [
+      'Instruction:',
+      AI_INSTRUCTION,
+      '',
+      'Target selector:',
+      selector,
+      '',
+      'Note:',
+      note
+    ].join('\n');
+  }
+
+  function getDefaultPayload(selector, note) {
+    return JSON.stringify(
+      {
+        selector,
+        note
+      },
+      null,
+      2
+    );
+  }
+
+  function loadAiMode() {
+    return new Promise((resolve) => {
+      chrome.runtime.sendMessage({ type: 'GET_SETTINGS' }, (response) => {
+        if (chrome.runtime.lastError || !response || !response.ok) {
+          resolve(false);
+          return;
+        }
+
+        resolve(Boolean(response.settings?.aiMode));
+      });
+    });
+  }
+
   function escapeCssIdentifier(value) {
     if (window.CSS && typeof window.CSS.escape === 'function') {
       return window.CSS.escape(value);
@@ -373,15 +411,6 @@
       cleanup();
       return;
     }
-    const payload = JSON.stringify(
-      {
-        selector,
-        note
-      },
-      null,
-      2
-    );
-
     async function persistFeedback(copiedToClipboard) {
       return new Promise((resolve) => {
         chrome.runtime.sendMessage(
@@ -403,6 +432,8 @@
 
     async function finishSelection() {
       let copiedToClipboard = false;
+      const aiMode = await loadAiMode();
+      const payload = aiMode ? getAiPayload(selector, note) : getDefaultPayload(selector, note);
 
       try {
         await navigator.clipboard.writeText(payload);
