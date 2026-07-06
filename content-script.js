@@ -35,10 +35,12 @@
     fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
     fontSize: '12px',
     lineHeight: '1.4',
-    whiteSpace: 'pre-wrap',
+    whiteSpace: 'normal',
     wordBreak: 'break-word',
     boxShadow: '0 10px 30px rgba(15, 23, 42, 0.35)',
     border: '1px solid rgba(148, 163, 184, 0.35)',
+    maxHeight: '320px',
+    overflow: 'auto',
     display: 'none',
     boxSizing: 'border-box'
   });
@@ -103,12 +105,100 @@
     const computedStyle = window.getComputedStyle(element);
 
     return STYLE_PROPERTIES.map((propertyName) => {
-      return `${propertyName}: ${computedStyle.getPropertyValue(propertyName)}`;
-    }).join('\n');
+      return {
+        property: propertyName,
+        value: computedStyle.getPropertyValue(propertyName)
+      };
+    });
+  }
+
+  function createToken(text, styles) {
+    const span = document.createElement('span');
+    span.textContent = text;
+    Object.assign(span.style, styles);
+    return span;
+  }
+
+  function createLine() {
+    const line = document.createElement('div');
+    Object.assign(line.style, {
+      whiteSpace: 'pre-wrap'
+    });
+    return line;
   }
 
   function updateTooltipContent(selector, stylePreview) {
-    tooltip.textContent = `Selector:\n${selector}\n\nStyles:\n${stylePreview}\n\nClick to select\nEsc to cancel`;
+    tooltip.replaceChildren();
+
+    const label = document.createElement('div');
+    label.textContent = 'Computed CSS preview';
+    Object.assign(label.style, {
+      marginBottom: '8px',
+      color: '#94a3b8',
+      fontFamily: 'Arial, sans-serif',
+      fontSize: '11px',
+      fontWeight: '600',
+      letterSpacing: '0.02em',
+      textTransform: 'uppercase'
+    });
+    tooltip.appendChild(label);
+
+    const selectorLine = createLine();
+    selectorLine.appendChild(
+      createToken(selector, {
+        color: '#e879f9'
+      })
+    );
+    selectorLine.appendChild(
+      createToken(' {', {
+        color: '#cbd5e1'
+      })
+    );
+    tooltip.appendChild(selectorLine);
+
+    stylePreview.forEach(({ property, value }) => {
+      const declarationLine = createLine();
+      declarationLine.style.paddingLeft = '14px';
+      declarationLine.appendChild(
+        createToken(property, {
+          color: '#93c5fd'
+        })
+      );
+      declarationLine.appendChild(
+        createToken(': ', {
+          color: '#cbd5e1'
+        })
+      );
+      declarationLine.appendChild(
+        createToken(value || 'initial', {
+          color: '#fcd34d'
+        })
+      );
+      declarationLine.appendChild(
+        createToken(';', {
+          color: '#cbd5e1'
+        })
+      );
+      tooltip.appendChild(declarationLine);
+    });
+
+    const closingLine = createLine();
+    closingLine.appendChild(
+      createToken('}', {
+        color: '#cbd5e1'
+      })
+    );
+    tooltip.appendChild(closingLine);
+
+    const helper = document.createElement('div');
+    helper.textContent = 'Click to select • Esc to cancel';
+    Object.assign(helper.style, {
+      marginTop: '10px',
+      color: '#94a3b8',
+      fontFamily: 'Arial, sans-serif',
+      fontSize: '11px'
+    });
+    tooltip.appendChild(helper);
   }
 
   function positionTooltip(element) {
