@@ -21,15 +21,57 @@
     boxSizing: 'border-box'
   });
 
+  const tooltip = document.createElement('div');
+  tooltip.setAttribute('data-visual-feedback-tooltip', 'true');
+  Object.assign(tooltip.style, {
+    position: 'fixed',
+    pointerEvents: 'none',
+    zIndex: '2147483647',
+    maxWidth: '360px',
+    padding: '10px 12px',
+    borderRadius: '8px',
+    background: '#0f172a',
+    color: '#e2e8f0',
+    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+    fontSize: '12px',
+    lineHeight: '1.4',
+    whiteSpace: 'pre-wrap',
+    wordBreak: 'break-word',
+    boxShadow: '0 10px 30px rgba(15, 23, 42, 0.35)',
+    border: '1px solid rgba(148, 163, 184, 0.35)',
+    display: 'none',
+    boxSizing: 'border-box'
+  });
+
   document.documentElement.appendChild(overlay);
+  document.documentElement.appendChild(tooltip);
 
   let currentTarget = null;
+  let currentSelector = '';
+  const STYLE_PROPERTIES = [
+    'display',
+    'position',
+    'width',
+    'height',
+    'color',
+    'background-color',
+    'font-size',
+    'font-weight',
+    'line-height',
+    'margin',
+    'padding',
+    'border',
+    'border-radius',
+    'opacity',
+    'z-index'
+  ];
 
   function cleanup() {
     document.removeEventListener('mousemove', handleMouseMove, true);
     document.removeEventListener('click', handleClick, true);
     document.removeEventListener('keydown', handleKeyDown, true);
     overlay.remove();
+    tooltip.remove();
     window.__visualFeedbackPickerActive = false;
   }
 
@@ -37,7 +79,9 @@
     return (
       !element ||
       element === overlay ||
-      element.closest('[data-visual-feedback-overlay="true"]')
+      element === tooltip ||
+      element.closest('[data-visual-feedback-overlay="true"]') ||
+      element.closest('[data-visual-feedback-tooltip="true"]')
     );
   }
 
@@ -53,6 +97,65 @@
     overlay.style.left = `${rect.left}px`;
     overlay.style.width = `${rect.width}px`;
     overlay.style.height = `${rect.height}px`;
+  }
+
+  function getStylePreview(element) {
+    const computedStyle = window.getComputedStyle(element);
+
+    return STYLE_PROPERTIES.map((propertyName) => {
+      return `${propertyName}: ${computedStyle.getPropertyValue(propertyName)}`;
+    }).join('\n');
+  }
+
+  function updateTooltipContent(selector, stylePreview) {
+    tooltip.textContent = `Selector:\n${selector}\n\nStyles:\n${stylePreview}\n\nClick to select\nEsc to cancel`;
+  }
+
+  function positionTooltip(element) {
+    const rect = element.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const gap = 12;
+
+    tooltip.style.display = 'block';
+
+    const tooltipRect = tooltip.getBoundingClientRect();
+    let left = rect.left;
+    let top = rect.bottom + gap;
+
+    if (left + tooltipRect.width > viewportWidth - gap) {
+      left = viewportWidth - tooltipRect.width - gap;
+    }
+
+    if (left < gap) {
+      left = gap;
+    }
+
+    if (top + tooltipRect.height > viewportHeight - gap) {
+      top = rect.top - tooltipRect.height - gap;
+    }
+
+    if (top < gap) {
+      top = Math.min(viewportHeight - tooltipRect.height - gap, rect.bottom + gap);
+    }
+
+    if (top < gap) {
+      top = gap;
+    }
+
+    tooltip.style.left = `${left}px`;
+    tooltip.style.top = `${top}px`;
+  }
+
+  function updateTooltip(element, selector) {
+    if (!element || !selector) {
+      tooltip.style.display = 'none';
+      return;
+    }
+
+    const stylePreview = getStylePreview(element);
+    updateTooltipContent(selector, stylePreview);
+    positionTooltip(element);
   }
 
   function escapeCssIdentifier(value) {
@@ -143,8 +246,14 @@
       return;
     }
 
+    if (currentTarget === target) {
+      return;
+    }
+
     currentTarget = target;
+    currentSelector = buildSelector(target);
     updateOverlay(target);
+    updateTooltip(target, currentSelector);
   }
 
   function handleKeyDown(event) {
@@ -167,7 +276,7 @@
     currentTarget = target;
     updateOverlay(target);
 
-    const selector = buildSelector(target);
+    const selector = currentTarget === target && currentSelector ? currentSelector : buildSelector(target);
     const note = window.prompt('Add a note for this element:', '');
 
     if (note === null) {
