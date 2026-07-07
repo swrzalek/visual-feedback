@@ -18,7 +18,7 @@ jobs:
 
       - name: Read extension version
         run: |
-          VERSION=$(node -p "require('./manifest.json').version")
+          VERSION=$(node -p "require('./chromium/manifest.json').version")
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
           echo "PACKAGE_NAME=visual-feedback-chrome-v$VERSION.zip" >> "$GITHUB_ENV"
 
@@ -27,19 +27,19 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if gh release view "v${VERSION}" >/dev/null 2>&1; then
-            echo "Release v${VERSION} already exists. Bump manifest.json version before running this workflow again."
+            echo "Release v${VERSION} already exists. Bump chromium/manifest.json version before running this workflow again."
             exit 1
           fi
 
       - name: Prepare package
         run: |
           mkdir -p dist/package
-          cp manifest.json dist/package/
-          cp background.js dist/package/
-          cp content-script.js dist/package/
-          cp popup.html dist/package/
-          cp popup.css dist/package/
-          cp popup.js dist/package/
+          cp chromium/manifest.json dist/package/
+          cp chromium/background.js dist/package/
+          cp chromium/content-script.js dist/package/
+          cp chromium/popup.html dist/package/
+          cp chromium/popup.css dist/package/
+          cp chromium/popup.js dist/package/
 
       - name: Create zip archive
         run: |
