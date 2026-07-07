@@ -37,6 +37,8 @@ jobs:
           cp chromium/manifest.json dist/package/
           cp chromium/background.js dist/package/
           cp chromium/content-script.js dist/package/
+          cp chromium/offscreen.html dist/package/
+          cp chromium/offscreen.js dist/package/
           cp chromium/popup.html dist/package/
           cp chromium/popup.css dist/package/
           cp chromium/popup.js dist/package/
