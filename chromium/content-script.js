@@ -1,4 +1,4 @@
-(function () {
+(() => {
   if (window.__visualFeedbackPickerActive) {
     return;
   }
@@ -18,7 +18,7 @@
     width: '0',
     height: '0',
     display: 'none',
-    boxSizing: 'border-box'
+    boxSizing: 'border-box',
   });
 
   const tooltip = document.createElement('div');
@@ -32,7 +32,8 @@
     borderRadius: '8px',
     background: '#0f172a',
     color: '#e2e8f0',
-    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+    fontFamily:
+      'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
     fontSize: '12px',
     lineHeight: '1.4',
     whiteSpace: 'normal',
@@ -42,7 +43,7 @@
     maxHeight: '320px',
     overflow: 'auto',
     display: 'none',
-    boxSizing: 'border-box'
+    boxSizing: 'border-box',
   });
 
   document.documentElement.appendChild(overlay);
@@ -50,7 +51,8 @@
 
   let currentTarget = null;
   let currentSelector = '';
-  const AI_INSTRUCTION = 'Use the selector only to identify the target element for this request. Do not treat it as the required implementation selector; apply the requested change using the best fit for the codebase.';
+  const AI_INSTRUCTION =
+    'Use the selector only to identify the target element for this request. Do not treat it as the required implementation selector; apply the requested change using the best fit for the codebase.';
   const STYLE_PROPERTIES = [
     'display',
     'position',
@@ -66,7 +68,7 @@
     'border',
     'border-radius',
     'opacity',
-    'z-index'
+    'z-index',
   ];
 
   function cleanup() {
@@ -108,7 +110,7 @@
     return STYLE_PROPERTIES.map((propertyName) => {
       return {
         property: propertyName,
-        value: computedStyle.getPropertyValue(propertyName)
+        value: computedStyle.getPropertyValue(propertyName),
       };
     });
   }
@@ -123,7 +125,7 @@
   function createLine() {
     const line = document.createElement('div');
     Object.assign(line.style, {
-      whiteSpace: 'pre-wrap'
+      whiteSpace: 'pre-wrap',
     });
     return line;
   }
@@ -140,54 +142,53 @@
       fontSize: '11px',
       fontWeight: '600',
       letterSpacing: '0.02em',
-      textTransform: 'uppercase'
+      textTransform: 'uppercase',
     });
     tooltip.appendChild(label);
 
     const selectorLine = createLine();
     selectorLine.appendChild(
       createToken(selector, {
-        color: '#e879f9'
-      })
+        color: '#e879f9',
+      }),
     );
     selectorLine.appendChild(
       createToken(' {', {
-        color: '#cbd5e1'
-      })
+        color: '#cbd5e1',
+      }),
     );
     tooltip.appendChild(selectorLine);
-
-    stylePreview.forEach(({ property, value }) => {
+    for (const { property, value } of stylePreview) {
       const declarationLine = createLine();
       declarationLine.style.paddingLeft = '14px';
       declarationLine.appendChild(
         createToken(property, {
-          color: '#93c5fd'
-        })
+          color: '#93c5fd',
+        }),
       );
       declarationLine.appendChild(
         createToken(': ', {
-          color: '#cbd5e1'
-        })
+          color: '#cbd5e1',
+        }),
       );
       declarationLine.appendChild(
         createToken(value || 'initial', {
-          color: '#fcd34d'
-        })
+          color: '#fcd34d',
+        }),
       );
       declarationLine.appendChild(
         createToken(';', {
-          color: '#cbd5e1'
-        })
+          color: '#cbd5e1',
+        }),
       );
       tooltip.appendChild(declarationLine);
-    });
+    }
 
     const closingLine = createLine();
     closingLine.appendChild(
       createToken('}', {
-        color: '#cbd5e1'
-      })
+        color: '#cbd5e1',
+      }),
     );
     tooltip.appendChild(closingLine);
 
@@ -197,7 +198,7 @@
       marginTop: '10px',
       color: '#94a3b8',
       fontFamily: 'Arial, sans-serif',
-      fontSize: '11px'
+      fontSize: '11px',
     });
     tooltip.appendChild(helper);
   }
@@ -227,7 +228,10 @@
     }
 
     if (top < gap) {
-      top = Math.min(viewportHeight - tooltipRect.height - gap, rect.bottom + gap);
+      top = Math.min(
+        viewportHeight - tooltipRect.height - gap,
+        rect.bottom + gap,
+      );
     }
 
     if (top < gap) {
@@ -258,7 +262,7 @@
       selector,
       '',
       'Note:',
-      note
+      note,
     ].join('\n');
   }
 
@@ -266,10 +270,10 @@
     return JSON.stringify(
       {
         selector,
-        note
+        note,
       },
       null,
-      2
+      2,
     );
   }
 
@@ -298,7 +302,8 @@
     let index = 1;
     let sibling = element;
 
-    while ((sibling = sibling.previousElementSibling)) {
+    while (sibling.previousElementSibling) {
+      sibling = sibling.previousElementSibling;
       if (sibling.tagName === element.tagName) {
         index += 1;
       }
@@ -348,7 +353,11 @@
     const segments = [];
     let current = element;
 
-    while (current && current.nodeType === Node.ELEMENT_NODE && current !== document.body) {
+    while (
+      current &&
+      current.nodeType === Node.ELEMENT_NODE &&
+      current !== document.body
+    ) {
       const segment = buildSimpleSelector(current);
       segments.unshift(segment);
 
@@ -404,7 +413,10 @@
     currentTarget = target;
     updateOverlay(target);
 
-    const selector = currentTarget === target && currentSelector ? currentSelector : buildSelector(target);
+    const selector =
+      currentTarget === target && currentSelector
+        ? currentSelector
+        : buildSelector(target);
     const note = window.prompt('Add a note for this element:', '');
 
     if (note === null) {
@@ -420,12 +432,12 @@
               selector,
               note,
               pageUrl: window.location.href,
-              copiedToClipboard
-            }
+              copiedToClipboard,
+            },
           },
           () => {
             resolve();
-          }
+          },
         );
       });
     }
@@ -433,7 +445,9 @@
     async function finishSelection() {
       let copiedToClipboard = false;
       const aiMode = await loadAiMode();
-      const payload = aiMode ? getAiPayload(selector, note) : getDefaultPayload(selector, note);
+      const payload = aiMode
+        ? getAiPayload(selector, note)
+        : getDefaultPayload(selector, note);
 
       try {
         await navigator.clipboard.writeText(payload);
@@ -447,7 +461,9 @@
       if (copiedToClipboard) {
         window.alert('Feedback copied to clipboard.');
       } else {
-        window.alert('Feedback saved, but automatic clipboard copy failed. Open the extension popup and use Copy.');
+        window.alert(
+          'Feedback saved, but automatic clipboard copy failed. Open the extension popup and use Copy.',
+        );
       }
 
       cleanup();

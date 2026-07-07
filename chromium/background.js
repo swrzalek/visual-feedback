@@ -8,7 +8,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.type === 'SAVE_FEEDBACK') {
-    const { selector, note, pageUrl, copiedToClipboard } = message.payload || {};
+    const { selector, note, pageUrl, copiedToClipboard } =
+      message.payload || {};
 
     if (typeof selector !== 'string' || !selector.trim()) {
       sendResponse({ ok: false, error: 'Selector is required.' });
@@ -25,7 +26,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       note: note.trim(),
       pageUrl: typeof pageUrl === 'string' ? pageUrl : '',
       copiedToClipboard: Boolean(copiedToClipboard),
-      capturedAt: new Date().toISOString()
+      capturedAt: new Date().toISOString(),
     };
 
     chrome.storage.local.set({ [STORAGE_KEY]: feedback }, () => {
@@ -63,8 +64,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       sendResponse({
         ok: true,
         settings: {
-          aiMode: Boolean(result[SETTINGS_KEY]?.aiMode)
-        }
+          aiMode: Boolean(result[SETTINGS_KEY]?.aiMode),
+        },
       });
     });
 

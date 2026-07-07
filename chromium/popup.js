@@ -3,7 +3,8 @@ const statusElement = document.getElementById('status-message');
 const pickButton = document.getElementById('pick-element');
 const copyButton = document.getElementById('copy-result');
 const aiModeCheckbox = document.getElementById('ai-mode');
-const AI_INSTRUCTION = 'Use the selector only to identify the target element for this request. Do not treat it as the required implementation selector; apply the requested change using the best fit for the codebase.';
+const AI_INSTRUCTION =
+  'Use the selector only to identify the target element for this request. Do not treat it as the required implementation selector; apply the requested change using the best fit for the codebase.';
 
 function setStatus(message, isError = false) {
   statusElement.textContent = message;
@@ -18,10 +19,10 @@ function formatFeedback(feedback) {
   return JSON.stringify(
     {
       selector: feedback.selector,
-      note: feedback.note
+      note: feedback.note,
     },
     null,
-    2
+    2,
   );
 }
 
@@ -38,12 +39,14 @@ function formatAiFeedback(feedback) {
     feedback.selector,
     '',
     'Note:',
-    feedback.note
+    feedback.note,
   ].join('\n');
 }
 
 function getFormattedOutput(feedback) {
-  return aiModeCheckbox.checked ? formatAiFeedback(feedback) : formatFeedback(feedback);
+  return aiModeCheckbox.checked
+    ? formatAiFeedback(feedback)
+    : formatFeedback(feedback);
 }
 
 function renderFeedback(feedback) {
@@ -55,8 +58,8 @@ function saveSettings() {
     {
       type: 'SAVE_SETTINGS',
       payload: {
-        aiMode: aiModeCheckbox.checked
-      }
+        aiMode: aiModeCheckbox.checked,
+      },
     },
     (response) => {
       if (chrome.runtime.lastError) {
@@ -67,7 +70,7 @@ function saveSettings() {
       if (!response || !response.ok) {
         setStatus(response?.error || 'Could not save settings.', true);
       }
-    }
+    },
   );
 }
 
@@ -125,13 +128,18 @@ async function startPicker() {
   try {
     await chrome.scripting.executeScript({
       target: { tabId: tab.id },
-      files: ['content-script.js']
+      files: ['content-script.js'],
     });
 
-    setStatus('Picker is active. Hover and click an element. Press Esc to cancel.');
+    setStatus(
+      'Picker is active. Hover and click an element. Press Esc to cancel.',
+    );
     window.close();
   } catch (error) {
-    setStatus(error instanceof Error ? error.message : 'Failed to start picker.', true);
+    setStatus(
+      error instanceof Error ? error.message : 'Failed to start picker.',
+      true,
+    );
   }
 }
 
