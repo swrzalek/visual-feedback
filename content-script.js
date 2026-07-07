@@ -183,6 +183,12 @@
     });
     tooltip.appendChild(label);
 
+    const previewBlock = document.createElement('div');
+    Object.assign(previewBlock.style, {
+      padding: '0 0 8px',
+      borderBottom: '1px solid rgba(148, 163, 184, 0.2)'
+    });
+
     const selectorLine = createLine();
     selectorLine.appendChild(
       createToken(selector, {
@@ -194,7 +200,7 @@
         color: '#cbd5e1'
       })
     );
-    tooltip.appendChild(selectorLine);
+    previewBlock.appendChild(selectorLine);
 
     stylePreview.forEach(({ property, value }) => {
       const declarationLine = createLine();
@@ -219,7 +225,7 @@
           color: '#cbd5e1'
         })
       );
-      tooltip.appendChild(declarationLine);
+      previewBlock.appendChild(declarationLine);
     });
 
     const closingLine = createLine();
@@ -228,12 +234,13 @@
         color: '#cbd5e1'
       })
     );
-    tooltip.appendChild(closingLine);
+    previewBlock.appendChild(closingLine);
+    tooltip.appendChild(previewBlock);
 
     const helper = document.createElement('div');
     helper.textContent = 'Click to select • Esc to cancel';
     Object.assign(helper.style, {
-      marginTop: '10px',
+      marginTop: '8px',
       color: '#94a3b8',
       fontFamily: 'Arial, sans-serif',
       fontSize: '11px'
