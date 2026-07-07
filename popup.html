@@ -18,12 +18,17 @@
       <label class="checkbox-row" for="ai-mode">
         <input id="ai-mode" type="checkbox" />
         <span>Format for AI</span>
-        <span class="tooltip" tabindex="0" aria-label="About Format for AI">
+        <button
+          class="tooltip"
+          type="button"
+          aria-label="About Format for AI"
+          aria-describedby="ai-mode-tooltip"
+        >
           ?
-          <span class="tooltip-text" role="tooltip">
+          <span id="ai-mode-tooltip" class="tooltip-text" role="tooltip">
             Copies the result as an AI-ready prompt with reusable guidance, the selected element selector, and your note.
           </span>
-        </span>
+        </button>
       </label>
 
       <section class="result-card" aria-live="polite">
