@@ -450,8 +450,11 @@
         : getDefaultPayload(selector, note);
 
       try {
-        await navigator.clipboard.writeText(payload);
-        copiedToClipboard = true;
+        const response = await chrome.runtime.sendMessage({
+          type: 'COPY_TO_CLIPBOARD',
+          payload: { text: payload },
+        });
+        copiedToClipboard = Boolean(response?.ok);
       } catch {
         copiedToClipboard = false;
       }
