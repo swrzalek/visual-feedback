@@ -1,18 +1,44 @@
 # Visual Feedback Picker
 
-A basic Chromium extension that lets you pick an element on a page, add a note, and copy a JSON payload with the element selector and note.
+Chromium extension for collecting UI feedback directly from a live page. It lets you pick an element, capture a best-effort selector, attach a note, and copy the result as either JSON or AI-friendly instructions.
 
-## Features
+## What this project does
 
-- Manifest V3 extension
-- Minimal permissions: `activeTab`, `scripting`, `storage`, `tabs`, `clipboardWrite`, `offscreen`
-- Popup button to start picker mode
-- Keyboard shortcut to activate the picker (`Ctrl+Shift+Y` / `Command+Shift+Y`)
-- Page hover highlight + live selector/style tooltip + click-to-select flow
-- Prompt for a note after selecting an element
-- Automatic clipboard copy after capture via an MV3 offscreen extension document
-- Optional AI copy mode with reusable implementation guidance
-- Copy-ready output:
+The extension is intentionally small and has no build step.
+
+- Injects a content script into the active tab on demand
+- Highlights the hovered element and shows a selector + style preview
+- Prompts for a note when the user clicks an element
+- Stores the latest capture in `chrome.storage.local`
+- Lets the popup re-copy the latest capture later
+- Supports an optional **AI copy mode** for pasting directly into coding agents
+
+## Quick start
+
+### 1. Load the extension in Chrome or Chromium
+
+1. Open `chrome://extensions`
+2. Enable **Developer mode**
+3. Click **Load unpacked**
+4. Select:
+
+```text
+/Users/swrzalek/Projects/visual-feedback/chromium
+```
+
+### 2. Use it
+
+1. Open any normal `http://` or `https://` page
+2. Open the extension popup
+3. Click **Pick element**
+4. Hover the page to inspect elements
+5. Click the target element
+6. Enter a note in the browser prompt
+7. Reopen the popup to copy the latest result if needed
+
+## Example output
+
+### Default mode
 
 ```json
 {
@@ -21,45 +47,36 @@ A basic Chromium extension that lets you pick an element on a page, add a note, 
 }
 ```
 
-## Structure
-
-- `chromium/manifest.json` — MV3 manifest
-- `chromium/background.js` — message handling and persistence in `chrome.storage`
-- `chromium/content-script.js` — element picker and selector generation
-- `chromium/popup.html` / `chromium/popup.css` / `chromium/popup.js` — popup UI and copy action
-
-This repo now follows a browser-target layout similar to uBOL-home, with only the Chromium target implemented for now.
-
-## Load in Chromium
-
-1. Open `chrome://extensions`
-2. Enable **Developer mode**
-3. Click **Load unpacked**
-4. Select this folder:
+### AI copy mode
 
 ```text
-/Users/swrzalek/Projects/visual-feedback/chromium
+Instruction:
+Use the selector only to identify the target element for this request. Do not treat it as the required implementation selector; apply the requested change using the best fit for the codebase.
+
+Target selector:
+#submit-button
+
+Note:
+Primary CTA is misaligned
 ```
 
-## Usage
+## Project structure
 
-1. Open any regular `http` or `https` page
-2. Open the extension popup
-3. Enable **AI copy mode** if you want agent-ready output
-4. Start the picker from the popup or use `Ctrl+Shift+Y` / `Command+Shift+Y`
-5. Hover elements to preview the selector and computed styles in the popout
-6. Click the target element
-7. Enter a note in the prompt
-8. The extension attempts to copy the result automatically
-9. If auto-copy is blocked, reopen the popup and click **Copy**
+```text
+chromium/
+├── manifest.json      # Extension metadata and permissions
+├── background.js      # Message router + storage for feedback/settings
+├── content-script.js  # Picker overlay, selector generation, note capture
+├── popup.html         # Popup markup
+├── popup.css          # Popup styling
+└── popup.js           # Popup actions and rendering
+```
 
-## Notes
+## Known limitations
 
-- Press `Esc` while picking to cancel.
-- The selector generator is intentionally simple and best-effort for v1.
-- The style preview shows a curated subset of computed CSS properties for readability.
-- The extension stores only the latest captured result in `chrome.storage.local`.
-- Clipboard auto-copy now runs through the extension worker for better reliability, but the popup copy button remains as a fallback if the browser blocks clipboard access.
-- AI copy mode prepends a reusable instruction so the result can be pasted directly into an AI coding agent.
-- To customize the keyboard shortcut, use `chrome://extensions/shortcuts` and bind the shortcut to **Activate the picker** rather than the default extension action.
-- If the shortcut still does not launch the picker, reopen the popup and check the shortcut status message for the last recorded failure reason.
+- Chromium-only right now
+- No automated tests yet
+- No build/lint/format scripts in the repository yet
+- Selector generation is helpful but not guaranteed stable across DOM changes
+- Note entry currently uses `window.prompt`, which is functional but basic
+- Only the latest capture is stored
