@@ -141,23 +141,12 @@ function loadLatestFeedback() {
 async function startPicker() {
   setStatus('Starting picker...');
 
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-
-  if (!tab || typeof tab.id !== 'number') {
-    setStatus('No active tab available.', true);
-    return;
-  }
-
-  if (!tab.url || !/^https?:/i.test(tab.url)) {
-    setStatus('Picker only works on regular http/https pages.', true);
-    return;
-  }
-
   try {
-    await chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      files: ['content-script.js']
-    });
+    const response = await chrome.runtime.sendMessage({ type: 'START_PICKER' });
+
+    if (!response?.ok) {
+      throw new Error(response?.error || 'Failed to start picker.');
+    }
 
     setStatus('Picker is active. Hover and click an element. Press Esc to cancel.');
     window.close();

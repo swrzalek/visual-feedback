@@ -1,9 +1,11 @@
 (function () {
-  if (window.__visualFeedbackPickerActive) {
+  if (window.__visualFeedbackPickerBootstrapped) {
+    window.__visualFeedbackPickerActivate?.();
     return;
   }
 
-  window.__visualFeedbackPickerActive = true;
+  window.__visualFeedbackPickerBootstrapped = true;
+  window.__visualFeedbackPickerActive = false;
 
   const overlay = document.createElement('div');
   overlay.setAttribute('data-visual-feedback-overlay', 'true');
@@ -45,9 +47,6 @@
     boxSizing: 'border-box'
   });
 
-  document.documentElement.appendChild(overlay);
-  document.documentElement.appendChild(tooltip);
-
   let currentTarget = null;
   let currentSelector = '';
   const AI_INSTRUCTION = 'Use the selector only to identify the target element for this request. Do not treat it as the required implementation selector; apply the requested change using the best fit for the codebase.';
@@ -70,16 +69,47 @@
   ];
 
   function cleanup() {
+    if (!window.__visualFeedbackPickerActive) {
+      return;
+    }
+
     document.removeEventListener('mousemove', handleMouseMove, true);
     document.removeEventListener('click', handleClick, true);
     document.removeEventListener('keydown', handleKeyDown, true);
-    overlay.remove();
-    tooltip.remove();
+    overlay.style.display = 'none';
+    tooltip.style.display = 'none';
     window.__visualFeedbackPickerActive = false;
+    currentTarget = null;
+    currentSelector = '';
+  }
+
+  function activatePicker() {
+    if (window.__visualFeedbackPickerActive) {
+      return;
+    }
+
+    if (!overlay.isConnected) {
+      document.documentElement.appendChild(overlay);
+    }
+
+    if (!tooltip.isConnected) {
+      document.documentElement.appendChild(tooltip);
+    }
+
+    window.__visualFeedbackPickerActive = true;
+    document.addEventListener('mousemove', handleMouseMove, true);
+    document.addEventListener('click', handleClick, true);
+    document.addEventListener('keydown', handleKeyDown, true);
   }
 
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message?.type === 'PING_PICKER') {
+      sendResponse({ ok: true, active: window.__visualFeedbackPickerActive === true });
+      return false;
+    }
+
+    if (message?.type === 'ACTIVATE_PICKER') {
+      activatePicker();
       sendResponse({ ok: true, active: true });
       return false;
     }
@@ -461,7 +491,6 @@
     finishSelection();
   }
 
-  document.addEventListener('mousemove', handleMouseMove, true);
-  document.addEventListener('click', handleClick, true);
-  document.addEventListener('keydown', handleKeyDown, true);
+  window.__visualFeedbackPickerActivate = activatePicker;
+  activatePicker();
 })();

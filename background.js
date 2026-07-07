@@ -77,12 +77,14 @@ async function startPickerOnActiveTab(commandTab = null, source = 'unknown') {
   }
 
   try {
-    await chrome.tabs.sendMessage(tab.id, { type: 'PING_PICKER' });
+    await chrome.tabs.sendMessage(tab.id, { type: 'ACTIVATE_PICKER' });
   } catch {
     await chrome.scripting.executeScript({
       target: { tabId: tab.id },
       files: ['content-script.js']
     });
+
+    await chrome.tabs.sendMessage(tab.id, { type: 'ACTIVATE_PICKER' });
   }
 
   await setCommandStatus({
