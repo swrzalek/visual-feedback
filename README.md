@@ -1,6 +1,6 @@
 # Visual Feedback Picker
 
-A basic Chrome extension that lets you pick an element on a page, add a note, and copy a JSON payload with the element selector and note.
+A basic Chromium extension that lets you pick an element on a page, add a note, and copy a JSON payload with the element selector and note.
 
 ## Features
 
@@ -21,14 +21,16 @@ A basic Chrome extension that lets you pick an element on a page, add a note, an
 }
 ```
 
-## Files
+## Structure
 
-- `manifest.json` — MV3 manifest
-- `background.js` — message handling and persistence in `chrome.storage`
-- `content-script.js` — element picker and selector generation
-- `popup.html` / `popup.css` / `popup.js` — popup UI and copy action
+- `chromium/manifest.json` — MV3 manifest
+- `chromium/background.js` — message handling and persistence in `chrome.storage`
+- `chromium/content-script.js` — element picker and selector generation
+- `chromium/popup.html` / `chromium/popup.css` / `chromium/popup.js` — popup UI and copy action
 
-## Load in Chrome
+This repo now follows a browser-target layout similar to uBOL-home, with only the Chromium target implemented for now.
+
+## Load in Chromium
 
 1. Open `chrome://extensions`
 2. Enable **Developer mode**
@@ -36,7 +38,7 @@ A basic Chrome extension that lets you pick an element on a page, add a note, an
 4. Select this folder:
 
 ```text
-/Users/swrzalek/Projects/visual-feedback
+/Users/swrzalek/Projects/visual-feedback/chromium
 ```
 
 ## Usage

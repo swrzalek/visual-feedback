@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Visual Feedback Picker</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main class="popup">
+      <h1>Visual Feedback</h1>
+      <p class="subtitle">Pick an element, add a note, and copy the result.</p>
+
+      <button id="pick-element" class="primary-button" type="button">
+        Pick element
+      </button>
+
+      <label class="checkbox-row" for="ai-mode">
+        <input id="ai-mode" type="checkbox" />
+        <span>AI copy mode</span>
+      </label>
+
+      <section class="result-card" aria-live="polite">
+        <div class="result-header">
+          <h2>Latest result</h2>
+          <button id="copy-result" type="button">Copy</button>
+        </div>
+
+        <pre id="result-output">No feedback captured yet.</pre>
+        <p id="status-message" class="status-message"></p>
+      </section>
+    </main>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
