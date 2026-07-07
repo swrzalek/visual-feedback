@@ -1,4 +1,4 @@
-(function () {
+(() => {
   if (window.__visualFeedbackPickerActive) {
     return;
   }
@@ -158,8 +158,7 @@
       }),
     );
     tooltip.appendChild(selectorLine);
-
-    stylePreview.forEach(({ property, value }) => {
+    for (const { property, value } of stylePreview) {
       const declarationLine = createLine();
       declarationLine.style.paddingLeft = '14px';
       declarationLine.appendChild(
@@ -183,7 +182,7 @@
         }),
       );
       tooltip.appendChild(declarationLine);
-    });
+    }
 
     const closingLine = createLine();
     closingLine.appendChild(
@@ -303,7 +302,8 @@
     let index = 1;
     let sibling = element;
 
-    while ((sibling = sibling.previousElementSibling)) {
+    while (sibling.previousElementSibling) {
+      sibling = sibling.previousElementSibling;
       if (sibling.tagName === element.tagName) {
         index += 1;
       }
