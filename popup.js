@@ -3,7 +3,6 @@ const statusElement = document.getElementById('status-message');
 const pickButton = document.getElementById('pick-element');
 const copyButton = document.getElementById('copy-result');
 const aiModeCheckbox = document.getElementById('ai-mode');
-const shortcutStatusElement = document.getElementById('shortcut-status');
 const AI_INSTRUCTION = 'Use the selector only to identify the target element for this request. Do not treat it as the required implementation selector; apply the requested change using the best fit for the codebase.';
 
 function setStatus(message, isError = false) {
@@ -80,25 +79,6 @@ function saveSettings() {
   );
 }
 
-function loadCommandStatus() {
-  chrome.runtime.sendMessage({ type: 'GET_COMMAND_STATUS' }, (response) => {
-    if (chrome.runtime.lastError || !response || !response.ok) {
-      shortcutStatusElement.textContent = '';
-      return;
-    }
-
-    const status = response.status;
-    if (!status) {
-      shortcutStatusElement.textContent = 'No shortcut run recorded yet.';
-      return;
-    }
-
-    shortcutStatusElement.textContent = status.ok
-      ? `Last shortcut run succeeded on ${status.at}.`
-      : `Last shortcut run failed: ${status.message}`;
-  });
-}
-
 function loadSettings() {
   chrome.runtime.sendMessage({ type: 'GET_SETTINGS' }, (response) => {
     if (chrome.runtime.lastError) {
@@ -113,7 +93,6 @@ function loadSettings() {
 
     aiModeCheckbox.checked = Boolean(response.settings?.aiMode);
     loadLatestFeedback();
-    loadCommandStatus();
   });
 }
 
