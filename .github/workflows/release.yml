@@ -1,0 +1,55 @@
+name: Chrome release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build and release Chrome extension
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Read extension version
+        run: |
+          VERSION=$(node -p "require('./manifest.json').version")
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "PACKAGE_NAME=visual-feedback-chrome-v$VERSION.zip" >> "$GITHUB_ENV"
+
+      - name: Check release tag does not already exist
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh release view "v${VERSION}" >/dev/null 2>&1; then
+            echo "Release v${VERSION} already exists. Bump manifest.json version before running this workflow again."
+            exit 1
+          fi
+
+      - name: Prepare package
+        run: |
+          mkdir -p dist/package
+          cp manifest.json dist/package/
+          cp background.js dist/package/
+          cp content-script.js dist/package/
+          cp popup.html dist/package/
+          cp popup.css dist/package/
+          cp popup.js dist/package/
+
+      - name: Create zip archive
+        run: |
+          cd dist/package
+          zip -r "../$PACKAGE_NAME" .
+
+      - name: Create GitHub release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "v${VERSION}" \
+            --title "v${VERSION}" \
+            "dist/${PACKAGE_NAME}"
