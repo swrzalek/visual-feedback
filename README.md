@@ -72,11 +72,26 @@ chromium/
 └── popup.js           # Popup actions and rendering
 ```
 
+## Code quality
+
+Run Biome from the repository root:
+
+```bash
+npm install
+npm run check
+```
+
+Useful commands:
+
+```bash
+npm run lint
+npm run format
+```
+
 ## Known limitations
 
 - Chromium-only right now
 - No automated tests yet
-- No build/lint/format scripts in the repository yet
 - Selector generation is helpful but not guaranteed stable across DOM changes
 - Note entry currently uses `window.prompt`, which is functional but basic
 - Only the latest capture is stored
