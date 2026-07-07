@@ -1,9 +1,11 @@
 (function () {
-  if (window.__visualFeedbackPickerActive) {
+  if (window.__visualFeedbackPickerBootstrapped) {
+    window.__visualFeedbackPickerActivate?.();
     return;
   }
 
-  window.__visualFeedbackPickerActive = true;
+  window.__visualFeedbackPickerBootstrapped = true;
+  window.__visualFeedbackPickerActive = false;
 
   const overlay = document.createElement('div');
   overlay.setAttribute('data-visual-feedback-overlay', 'true');
@@ -45,9 +47,6 @@
     boxSizing: 'border-box'
   });
 
-  document.documentElement.appendChild(overlay);
-  document.documentElement.appendChild(tooltip);
-
   let currentTarget = null;
   let currentSelector = '';
   const AI_INSTRUCTION = 'Use the selector only to identify the target element for this request. Do not treat it as the required implementation selector; apply the requested change using the best fit for the codebase.';
@@ -70,13 +69,53 @@
   ];
 
   function cleanup() {
+    if (!window.__visualFeedbackPickerActive) {
+      return;
+    }
+
     document.removeEventListener('mousemove', handleMouseMove, true);
     document.removeEventListener('click', handleClick, true);
     document.removeEventListener('keydown', handleKeyDown, true);
-    overlay.remove();
-    tooltip.remove();
+    overlay.style.display = 'none';
+    tooltip.style.display = 'none';
     window.__visualFeedbackPickerActive = false;
+    currentTarget = null;
+    currentSelector = '';
   }
+
+  function activatePicker() {
+    if (window.__visualFeedbackPickerActive) {
+      return;
+    }
+
+    if (!overlay.isConnected) {
+      document.documentElement.appendChild(overlay);
+    }
+
+    if (!tooltip.isConnected) {
+      document.documentElement.appendChild(tooltip);
+    }
+
+    window.__visualFeedbackPickerActive = true;
+    document.addEventListener('mousemove', handleMouseMove, true);
+    document.addEventListener('click', handleClick, true);
+    document.addEventListener('keydown', handleKeyDown, true);
+  }
+
+  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message?.type === 'PING_PICKER') {
+      sendResponse({ ok: true, active: window.__visualFeedbackPickerActive === true });
+      return false;
+    }
+
+    if (message?.type === 'ACTIVATE_PICKER') {
+      activatePicker();
+      sendResponse({ ok: true, active: true });
+      return false;
+    }
+
+    return false;
+  });
 
   function isIgnoredElement(element) {
     return (
@@ -144,6 +183,12 @@
     });
     tooltip.appendChild(label);
 
+    const previewBlock = document.createElement('div');
+    Object.assign(previewBlock.style, {
+      padding: '0 0 8px',
+      borderBottom: '1px solid rgba(148, 163, 184, 0.2)'
+    });
+
     const selectorLine = createLine();
     selectorLine.appendChild(
       createToken(selector, {
@@ -155,7 +200,7 @@
         color: '#cbd5e1'
       })
     );
-    tooltip.appendChild(selectorLine);
+    previewBlock.appendChild(selectorLine);
 
     stylePreview.forEach(({ property, value }) => {
       const declarationLine = createLine();
@@ -180,7 +225,7 @@
           color: '#cbd5e1'
         })
       );
-      tooltip.appendChild(declarationLine);
+      previewBlock.appendChild(declarationLine);
     });
 
     const closingLine = createLine();
@@ -189,12 +234,13 @@
         color: '#cbd5e1'
       })
     );
-    tooltip.appendChild(closingLine);
+    previewBlock.appendChild(closingLine);
+    tooltip.appendChild(previewBlock);
 
     const helper = document.createElement('div');
     helper.textContent = 'Click to select • Esc to cancel';
     Object.assign(helper.style, {
-      marginTop: '10px',
+      marginTop: '8px',
       color: '#94a3b8',
       fontFamily: 'Arial, sans-serif',
       fontSize: '11px'
@@ -411,7 +457,7 @@
       cleanup();
       return;
     }
-    async function persistFeedback(copiedToClipboard) {
+    async function persistFeedback(clipboardText) {
       return new Promise((resolve) => {
         chrome.runtime.sendMessage(
           {
@@ -420,34 +466,30 @@
               selector,
               note,
               pageUrl: window.location.href,
-              copiedToClipboard
+              clipboardText,
+              aiMode: Boolean(window.__visualFeedbackAiMode)
             }
           },
-          () => {
-            resolve();
+          (response) => {
+            resolve(response?.feedback || null);
           }
         );
       });
     }
 
     async function finishSelection() {
-      let copiedToClipboard = false;
       const aiMode = await loadAiMode();
+      window.__visualFeedbackAiMode = aiMode;
       const payload = aiMode ? getAiPayload(selector, note) : getDefaultPayload(selector, note);
 
-      try {
-        await navigator.clipboard.writeText(payload);
-        copiedToClipboard = true;
-      } catch {
-        copiedToClipboard = false;
-      }
-
-      await persistFeedback(copiedToClipboard);
+      const feedback = await persistFeedback(payload);
+      const copiedToClipboard = Boolean(feedback?.copiedToClipboard);
 
       if (copiedToClipboard) {
         window.alert('Feedback copied to clipboard.');
       } else {
-        window.alert('Feedback saved, but automatic clipboard copy failed. Open the extension popup and use Copy.');
+        const copyError = feedback?.copyError ? `\n\nReason: ${feedback.copyError}` : '';
+        window.alert(`Feedback saved, but automatic clipboard copy failed. Open the extension popup and use Copy.${copyError}`);
       }
 
       cleanup();
@@ -456,7 +498,6 @@
     finishSelection();
   }
 
-  document.addEventListener('mousemove', handleMouseMove, true);
-  document.addEventListener('click', handleClick, true);
-  document.addEventListener('keydown', handleKeyDown, true);
+  window.__visualFeedbackPickerActivate = activatePicker;
+  activatePicker();
 })();

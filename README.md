@@ -5,11 +5,12 @@ A basic Chromium extension that lets you pick an element on a page, add a note, 
 ## Features
 
 - Manifest V3 extension
-- Minimal permissions: `activeTab`, `scripting`, `storage`
+- Minimal permissions: `activeTab`, `scripting`, `storage`, `tabs`, `clipboardWrite`, `offscreen`
 - Popup button to start picker mode
+- Keyboard shortcut to activate the picker (`Ctrl+Shift+Y` / `Command+Shift+Y`)
 - Page hover highlight + live selector/style tooltip + click-to-select flow
 - Prompt for a note after selecting an element
-- Automatic clipboard copy after capture when the page allows it
+- Automatic clipboard copy after capture via an MV3 offscreen extension document
 - Optional AI copy mode with reusable implementation guidance
 - Copy-ready output:
 
@@ -45,7 +46,7 @@ This repo now follows a browser-target layout similar to uBOL-home, with only th
 1. Open any regular `http` or `https` page
 2. Open the extension popup
 3. Enable **AI copy mode** if you want agent-ready output
-4. Click **Pick element**
+4. Start the picker from the popup or use `Ctrl+Shift+Y` / `Command+Shift+Y`
 5. Hover elements to preview the selector and computed styles in the popout
 6. Click the target element
 7. Enter a note in the prompt
@@ -58,5 +59,7 @@ This repo now follows a browser-target layout similar to uBOL-home, with only th
 - The selector generator is intentionally simple and best-effort for v1.
 - The style preview shows a curated subset of computed CSS properties for readability.
 - The extension stores only the latest captured result in `chrome.storage.local`.
-- Clipboard auto-copy can fail on some pages/browser states, so the popup copy button remains as a fallback.
+- Clipboard auto-copy now runs through the extension worker for better reliability, but the popup copy button remains as a fallback if the browser blocks clipboard access.
 - AI copy mode prepends a reusable instruction so the result can be pasted directly into an AI coding agent.
+- To customize the keyboard shortcut, use `chrome://extensions/shortcuts` and bind the shortcut to **Activate the picker** rather than the default extension action.
+- If the shortcut still does not launch the picker, reopen the popup and check the shortcut status message for the last recorded failure reason.

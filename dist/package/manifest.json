@@ -3,9 +3,18 @@
   "name": "Visual Feedback Picker",
   "version": "0.1.0",
   "description": "Pick page elements, add notes, and copy selector feedback.",
-  "permissions": ["activeTab", "scripting", "storage", "tabs"],
+  "permissions": ["activeTab", "scripting", "storage", "tabs", "clipboardWrite", "offscreen"],
   "background": {
     "service_worker": "background.js"
+  },
+  "commands": {
+    "activate-picker": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+Y",
+        "mac": "Command+Shift+Y"
+      },
+      "description": "Activate the picker"
+    }
   },
   "action": {
     "default_title": "Visual Feedback Picker",
