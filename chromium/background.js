@@ -1,5 +1,46 @@
 const STORAGE_KEY = 'latestFeedback';
 const SETTINGS_KEY = 'settings';
+const OFFSCREEN_DOCUMENT_PATH = 'offscreen.html';
+let creatingOffscreenDocument;
+
+async function ensureOffscreenDocument() {
+  const offscreenUrl = chrome.runtime.getURL(OFFSCREEN_DOCUMENT_PATH);
+
+  if (chrome.runtime.getContexts) {
+    const contexts = await chrome.runtime.getContexts({
+      contextTypes: ['OFFSCREEN_DOCUMENT'],
+      documentUrls: [offscreenUrl],
+    });
+
+    if (contexts.length > 0) {
+      return;
+    }
+  }
+
+  if (!creatingOffscreenDocument) {
+    creatingOffscreenDocument = chrome.offscreen.createDocument({
+      url: chrome.runtime.getURL(OFFSCREEN_DOCUMENT_PATH),
+      reasons: ['CLIPBOARD'],
+      justification: 'Copy captured visual feedback to the clipboard.',
+    });
+  }
+
+  try {
+    await creatingOffscreenDocument;
+  } finally {
+    creatingOffscreenDocument = undefined;
+  }
+}
+
+async function copyTextToClipboard(text) {
+  await ensureOffscreenDocument();
+
+  return chrome.runtime.sendMessage({
+    type: 'WRITE_CLIPBOARD',
+    target: 'offscreen',
+    payload: { text },
+  });
+}
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!message || typeof message !== 'object') {
@@ -7,8 +48,38 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return false;
   }
 
+  if (message.target === 'offscreen') {
+    return false;
+  }
+
+  if (message.type === 'COPY_TO_CLIPBOARD') {
+    const { text } = message.payload || {};
+
+    if (typeof text !== 'string' || !text) {
+      sendResponse({ ok: false, error: 'Clipboard text is required.' });
+      return false;
+    }
+
+    copyTextToClipboard(text)
+      .then((response) => {
+        sendResponse(
+          response || { ok: false, error: 'No clipboard response received.' },
+        );
+      })
+      .catch((error) => {
+        sendResponse({
+          ok: false,
+          error:
+            error instanceof Error ? error.message : 'Clipboard copy failed.',
+        });
+      });
+
+    return true;
+  }
+
   if (message.type === 'SAVE_FEEDBACK') {
-    const { selector, note, pageUrl, copiedToClipboard } = message.payload || {};
+    const { selector, note, pageUrl, copiedToClipboard } =
+      message.payload || {};
 
     if (typeof selector !== 'string' || !selector.trim()) {
       sendResponse({ ok: false, error: 'Selector is required.' });
@@ -25,7 +96,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       note: note.trim(),
       pageUrl: typeof pageUrl === 'string' ? pageUrl : '',
       copiedToClipboard: Boolean(copiedToClipboard),
-      capturedAt: new Date().toISOString()
+      capturedAt: new Date().toISOString(),
     };
 
     chrome.storage.local.set({ [STORAGE_KEY]: feedback }, () => {
@@ -63,8 +134,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       sendResponse({
         ok: true,
         settings: {
-          aiMode: Boolean(result[SETTINGS_KEY]?.aiMode)
-        }
+          aiMode: Boolean(result[SETTINGS_KEY]?.aiMode),
+        },
       });
     });
 

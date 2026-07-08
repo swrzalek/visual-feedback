@@ -1,0 +1,12 @@
+{
+  "name": "visual-feedback",
+  "private": true,
+  "scripts": {
+    "lint": "npx biome lint .",
+    "format": "npx biome format --write .",
+    "check": "npx biome check ."
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4"
+  }
+}

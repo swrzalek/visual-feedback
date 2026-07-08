@@ -3,7 +3,14 @@
   "name": "Visual Feedback Picker",
   "version": "1.0.0",
   "description": "Pick page elements, add notes, and copy selector feedback.",
-  "permissions": ["activeTab", "scripting", "storage", "tabs"],
+  "permissions": [
+    "activeTab",
+    "clipboardWrite",
+    "offscreen",
+    "scripting",
+    "storage",
+    "tabs"
+  ],
   "background": {
     "service_worker": "background.js"
   },

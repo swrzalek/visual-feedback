@@ -2,13 +2,15 @@
 
 Chromium extension for collecting UI feedback directly from a live page. It lets you pick an element, capture a best-effort selector, attach a note, and copy the result as either JSON or AI-friendly instructions.
 
+https://github.com/user-attachments/assets/3d6bd23f-8f7c-4cc6-bea5-a8167bb81dfa
+
 ## What this project does
 
 The extension is intentionally small and has no build step.
 
 - Injects a content script into the active tab on demand
 - Highlights the hovered element and shows a selector + style preview
-- Prompts for a note when the user clicks an element
+- Opens an accessible note dialog when the user clicks an element
 - Stores the latest capture in `chrome.storage.local`
 - Lets the popup re-copy the latest capture later
 - Supports an optional **AI copy mode** for pasting directly into coding agents
@@ -20,11 +22,6 @@ The extension is intentionally small and has no build step.
 1. Open `chrome://extensions`
 2. Enable **Developer mode**
 3. Click **Load unpacked**
-4. Select:
-
-```text
-/Users/swrzalek/Projects/visual-feedback/chromium
-```
 
 ### 2. Use it
 
@@ -33,7 +30,7 @@ The extension is intentionally small and has no build step.
 3. Click **Pick element**
 4. Hover the page to inspect elements
 5. Click the target element
-6. Enter a note in the browser prompt
+6. Enter a note in the in-page feedback dialog
 7. Reopen the popup to copy the latest result if needed
 
 ## Example output
@@ -72,11 +69,26 @@ chromium/
 └── popup.js           # Popup actions and rendering
 ```
 
+## Code quality
+
+Run Biome from the repository root:
+
+```bash
+npm install
+npm run check
+```
+
+Useful commands:
+
+```bash
+npm run lint
+npm run format
+```
+
 ## Known limitations
 
 - Chromium-only right now
 - No automated tests yet
-- No build/lint/format scripts in the repository yet
 - Selector generation is helpful but not guaranteed stable across DOM changes
-- Note entry currently uses `window.prompt`, which is functional but basic
+- The feedback dialog is injected into pages and may still be affected by restrictive site policies
 - Only the latest capture is stored
