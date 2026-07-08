@@ -8,7 +8,7 @@ The extension is intentionally small and has no build step.
 
 - Injects a content script into the active tab on demand
 - Highlights the hovered element and shows a selector + style preview
-- Prompts for a note when the user clicks an element
+- Opens an accessible note dialog when the user clicks an element
 - Stores the latest capture in `chrome.storage.local`
 - Lets the popup re-copy the latest capture later
 - Supports an optional **AI copy mode** for pasting directly into coding agents
@@ -33,7 +33,7 @@ The extension is intentionally small and has no build step.
 3. Click **Pick element**
 4. Hover the page to inspect elements
 5. Click the target element
-6. Enter a note in the browser prompt
+6. Enter a note in the in-page feedback dialog
 7. Reopen the popup to copy the latest result if needed
 
 ## Example output
@@ -93,5 +93,5 @@ npm run format
 - Chromium-only right now
 - No automated tests yet
 - Selector generation is helpful but not guaranteed stable across DOM changes
-- Note entry currently uses `window.prompt`, which is functional but basic
+- The feedback dialog is injected into pages and may still be affected by restrictive site policies
 - Only the latest capture is stored

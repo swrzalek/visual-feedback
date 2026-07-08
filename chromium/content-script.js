@@ -51,6 +51,7 @@
 
   let currentTarget = null;
   let currentSelector = '';
+  let activeNoteDialog = null;
   const AI_INSTRUCTION =
     'Use the selector only to identify the target element for this request. Do not treat it as the required implementation selector; apply the requested change using the best fit for the codebase.';
   const STYLE_PROPERTIES = [
@@ -72,6 +73,7 @@
   ];
 
   function cleanup() {
+    activeNoteDialog?.close(null);
     document.removeEventListener('mousemove', handleMouseMove, true);
     document.removeEventListener('click', handleClick, true);
     document.removeEventListener('keydown', handleKeyDown, true);
@@ -86,8 +88,257 @@
       element === overlay ||
       element === tooltip ||
       element.closest('[data-visual-feedback-overlay="true"]') ||
-      element.closest('[data-visual-feedback-tooltip="true"]')
+      element.closest('[data-visual-feedback-tooltip="true"]') ||
+      element.closest('[data-visual-feedback-dialog-root="true"]')
     );
+  }
+
+  function createDialogButton(text, variant) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = text;
+    Object.assign(button.style, {
+      appearance: 'none',
+      border: variant === 'primary' ? '0' : '1px solid #cbd5e1',
+      borderRadius: '8px',
+      cursor: 'pointer',
+      fontFamily: 'Arial, sans-serif',
+      fontSize: '14px',
+      fontWeight: variant === 'primary' ? '700' : '600',
+      minHeight: '40px',
+      padding: '10px 14px',
+      background: variant === 'primary' ? '#4f46e5' : '#ffffff',
+      color: variant === 'primary' ? '#ffffff' : '#0f172a',
+      boxSizing: 'border-box',
+    });
+    return button;
+  }
+
+  function getFocusableElements(container) {
+    return Array.from(
+      container.querySelectorAll(
+        'button, textarea, input, select, a[href], [tabindex]:not([tabindex="-1"])',
+      ),
+    ).filter((element) => {
+      return (
+        element instanceof HTMLElement &&
+        !element.hasAttribute('disabled') &&
+        element.getAttribute('aria-hidden') !== 'true'
+      );
+    });
+  }
+
+  function requestNote() {
+    if (activeNoteDialog) {
+      activeNoteDialog.close(null);
+    }
+
+    return new Promise((resolve) => {
+      const previousActiveElement = document.activeElement;
+      const dialogId = `visual-feedback-note-${Date.now()}`;
+      const root = document.createElement('div');
+      root.setAttribute('data-visual-feedback-dialog-root', 'true');
+      Object.assign(root.style, {
+        position: 'fixed',
+        inset: '0',
+        zIndex: '2147483647',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '20px',
+        background: 'rgba(15, 23, 42, 0.45)',
+        boxSizing: 'border-box',
+      });
+
+      const dialog = document.createElement('section');
+      dialog.setAttribute('role', 'dialog');
+      dialog.setAttribute('aria-modal', 'true');
+      dialog.setAttribute('aria-labelledby', `${dialogId}-title`);
+      dialog.setAttribute('aria-describedby', `${dialogId}-description`);
+      Object.assign(dialog.style, {
+        width: 'min(440px, 100%)',
+        padding: '18px',
+        borderRadius: '14px',
+        background: '#ffffff',
+        color: '#0f172a',
+        fontFamily: 'Arial, sans-serif',
+        boxShadow: '0 24px 70px rgba(15, 23, 42, 0.4)',
+        border: '1px solid rgba(148, 163, 184, 0.45)',
+        boxSizing: 'border-box',
+      });
+
+      const title = document.createElement('h2');
+      title.id = `${dialogId}-title`;
+      title.textContent = 'Add feedback note';
+      Object.assign(title.style, {
+        margin: '0 0 8px',
+        color: '#0f172a',
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '18px',
+        lineHeight: '1.3',
+      });
+
+      const description = document.createElement('p');
+      description.id = `${dialogId}-description`;
+      description.textContent =
+        'Describe what should change about the selected element.';
+      Object.assign(description.style, {
+        margin: '0 0 14px',
+        color: '#475569',
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '13px',
+        lineHeight: '1.45',
+      });
+
+      const label = document.createElement('label');
+      label.setAttribute('for', `${dialogId}-textarea`);
+      label.textContent = 'Note';
+      Object.assign(label.style, {
+        display: 'block',
+        marginBottom: '6px',
+        color: '#334155',
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '13px',
+        fontWeight: '700',
+      });
+
+      const textarea = document.createElement('textarea');
+      textarea.id = `${dialogId}-textarea`;
+      textarea.rows = 5;
+      textarea.placeholder = 'Example: Primary CTA is misaligned';
+      Object.assign(textarea.style, {
+        width: '100%',
+        minHeight: '120px',
+        resize: 'vertical',
+        padding: '10px 12px',
+        border: '1px solid #cbd5e1',
+        borderRadius: '10px',
+        outline: 'none',
+        background: '#ffffff',
+        color: '#0f172a',
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '14px',
+        lineHeight: '1.45',
+        boxSizing: 'border-box',
+      });
+
+      const helper = document.createElement('p');
+      helper.textContent =
+        'Press Esc to cancel. Use Tab to move between controls.';
+      Object.assign(helper.style, {
+        margin: '8px 0 0',
+        color: '#64748b',
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '12px',
+        lineHeight: '1.4',
+      });
+
+      const actions = document.createElement('div');
+      Object.assign(actions.style, {
+        display: 'flex',
+        justifyContent: 'flex-end',
+        gap: '10px',
+        marginTop: '16px',
+      });
+
+      const cancelButton = createDialogButton('Cancel', 'secondary');
+      const saveButton = createDialogButton('Save feedback', 'primary');
+
+      actions.append(cancelButton, saveButton);
+      dialog.append(title, description, label, textarea, helper, actions);
+      root.appendChild(dialog);
+      document.documentElement.appendChild(root);
+
+      let isClosed = false;
+      const close = (value) => {
+        if (isClosed) {
+          return;
+        }
+
+        isClosed = true;
+        root.removeEventListener('click', handleBackdropClick);
+        root.removeEventListener('keydown', handleDialogKeyDown, true);
+        cancelButton.removeEventListener('click', handleCancel);
+        saveButton.removeEventListener('click', handleSave);
+        root.remove();
+        activeNoteDialog = null;
+
+        if (previousActiveElement instanceof HTMLElement) {
+          previousActiveElement.focus({ preventScroll: true });
+        }
+
+        resolve(value);
+      };
+
+      function handleCancel() {
+        close(null);
+      }
+
+      function handleSave() {
+        close(textarea.value);
+      }
+
+      function handleBackdropClick(event) {
+        event.stopPropagation();
+
+        if (event.target === root) {
+          event.preventDefault();
+          close(null);
+        }
+      }
+
+      function handleDialogKeyDown(event) {
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          close(null);
+          return;
+        }
+
+        if (event.key === 'Enter' && !event.shiftKey) {
+          event.preventDefault();
+          close(textarea.value);
+          return;
+        }
+
+        if (event.key !== 'Tab') {
+          return;
+        }
+
+        const focusableElements = getFocusableElements(dialog);
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+
+        if (!firstElement || !lastElement) {
+          event.preventDefault();
+          return;
+        }
+
+        if (event.shiftKey && document.activeElement === firstElement) {
+          event.preventDefault();
+          lastElement.focus();
+          return;
+        }
+
+        if (!event.shiftKey && document.activeElement === lastElement) {
+          event.preventDefault();
+          firstElement.focus();
+        }
+      }
+
+      root.addEventListener('click', handleBackdropClick);
+      root.addEventListener('keydown', handleDialogKeyDown, true);
+      cancelButton.addEventListener('click', handleCancel);
+      saveButton.addEventListener('click', handleSave);
+
+      activeNoteDialog = { close };
+
+      requestAnimationFrame(() => {
+        textarea.focus({ preventScroll: true });
+      });
+    });
   }
 
   function updateOverlay(element) {
@@ -394,12 +645,16 @@
   }
 
   function handleKeyDown(event) {
+    if (activeNoteDialog) {
+      return;
+    }
+
     if (event.key === 'Escape') {
       cleanup();
     }
   }
 
-  function handleClick(event) {
+  async function handleClick(event) {
     const target = event.target;
 
     if (!(target instanceof Element) || isIgnoredElement(target)) {
@@ -417,7 +672,7 @@
       currentTarget === target && currentSelector
         ? currentSelector
         : buildSelector(target);
-    const note = window.prompt('Add a note for this element:', '');
+    const note = await requestNote();
 
     if (note === null) {
       cleanup();
