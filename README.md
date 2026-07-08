@@ -2,6 +2,8 @@
 
 Chromium extension for collecting UI feedback directly from a live page. It lets you pick an element, capture a best-effort selector, attach a note, and copy the result as either JSON or AI-friendly instructions.
 
+https://github.com/user-attachments/assets/3d6bd23f-8f7c-4cc6-bea5-a8167bb81dfa
+
 ## What this project does
 
 The extension is intentionally small and has no build step.
